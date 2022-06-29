@@ -58,7 +58,7 @@ func Start(host string, port int) {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`I go message:\n` + req.PARAM))
+		_, _ = w.Write([]byte(`I got message:\n` + req.PARAM))
 	}).Methods(http.MethodPost)
 
 	router.HandleFunc("/headers", func(w http.ResponseWriter, r *http.Request) {
