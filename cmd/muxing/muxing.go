@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -20,6 +22,68 @@ main function reads host/port from env just for an example, flavor it following 
 // Start /** Starts the web server listener on given host and port.
 func Start(host string, port int) {
 	router := mux.NewRouter()
+
+	router.HandleFunc("/name/{param}", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		param, ok := vars["param"]
+		if !ok {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`please provide something meaningful`))
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`Hello, ` + param + "!"))
+	}).Methods(http.MethodGet)
+
+	router.HandleFunc("/bad", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}).Methods(http.MethodGet)
+
+	router.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
+		req := struct {
+			PARAM string `json:"PARAM"`
+		}{}
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`wrong try`))
+			return
+		}
+
+		if err = json.Unmarshal(body, &req); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`wrong body`))
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`I go message:\n` + req.PARAM))
+	}).Methods(http.MethodPost)
+
+	router.HandleFunc("/headers", func(w http.ResponseWriter, r *http.Request) {
+		aValue := r.Header.Get("a")
+		bValue := r.Header.Get("b")
+
+		a, err := strconv.Atoi(aValue)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`wrong A header`))
+			return
+		}
+
+		b, err := strconv.Atoi(bValue)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`wrong B header`))
+			return
+		}
+
+		result := strconv.Itoa(a + b)
+		w.WriteHeader(http.StatusOK)
+		w.Header().Add("a+b", result)
+
+	}).Methods(http.MethodPost)
 
 	log.Println(fmt.Printf("Starting API server on %s:%d\n", host, port))
 	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), router); err != nil {
