@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -41,9 +40,6 @@ func Start(host string, port int) {
 	}).Methods(http.MethodGet)
 
 	router.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
-		req := struct {
-			PARAM string `json:"PARAM"`
-		}{}
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -51,14 +47,8 @@ func Start(host string, port int) {
 			return
 		}
 
-		if err = json.Unmarshal(body, &req); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte(`wrong body`))
-			return
-		}
-
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`I got message:\n` + req.PARAM))
+		_, _ = w.Write([]byte(`I got message:\n` + string(body)))
 	}).Methods(http.MethodPost)
 
 	router.HandleFunc("/headers", func(w http.ResponseWriter, r *http.Request) {
