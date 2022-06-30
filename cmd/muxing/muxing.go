@@ -49,7 +49,7 @@ func Start(host string, port int) {
 
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`I got message:\n` + string(body)))
-	}).Methods(http.MethodPost)
+	})
 
 	router.HandleFunc("/headers", func(w http.ResponseWriter, r *http.Request) {
 		aValue := r.Header.Get("a")
